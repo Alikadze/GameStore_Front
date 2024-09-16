@@ -1,0 +1,78 @@
+<div class="container">
+  <form [formGroup]="form">
+
+    <mat-form-field class="name">
+      <mat-label>Name</mat-label>
+      <input 
+        matInput
+        type="text"  
+        formControlName="name"
+        id="name"
+      >
+  
+      @if (form.get('name')?.hasError('required')) {
+        <mat-error>Name is required</mat-error>
+      }
+  
+      @if (form.get('name')?.hasError('minlength')) {
+        <mat-error>Name must be at least 3 characters long</mat-error>
+      }
+  
+      @if (form.get('name')?.hasError('maxlength')) {
+        <mat-error>Name must be at most 50 characters long</mat-error>
+      }
+    </mat-form-field>
+  
+    <mat-form-field>
+      <mat-label>Genre</mat-label>
+      <mat-select formControlName="genreId">
+        @for (genre of genres$ | async; track genre.id) {
+          <mat-option [value]="genre.id">{{genre.name}}</mat-option>
+        }
+      </mat-select>
+  
+      @if (form.get('genreId')?.hasError('required')) {
+        <mat-error>Genre is required</mat-error>
+      }
+    </mat-form-field>
+  
+    <mat-form-field>
+      <mat-label>Price</mat-label>
+      <input 
+        matInput
+        type="number"  
+        formControlName="price"
+        id="price"
+      >
+  
+      @if (form.get('price')?.hasError('required')) {
+        <mat-error>Price is required</mat-error>
+      }
+  
+      @if (form.get('price')?.hasError('min')) {
+        <mat-error>Price must be at least 0</mat-error>
+      }
+  
+      @if (form.get('price')?.hasError('max')) {
+        <mat-error>Price must be at most 100</mat-error>
+      }
+    </mat-form-field>
+  
+    <mat-form-field>
+      <mat-label>Game release date</mat-label>
+      <input matInput [matDatepicker]="picker" [max]="newDate" formControlName="releaseDate">
+      <mat-datepicker-toggle matIconSuffix [for]="picker"/>
+      <mat-datepicker
+        #picker
+        touchUi
+      />
+  
+      @if (form.get('releaseDate')?.hasError('required')) {
+        <mat-error>Release date is required</mat-error>
+      }
+    </mat-form-field>
+  
+  
+    <button style="margin: auto;" mat-flat-button (click)="createGame()">Add Game</button>
+  </form>
+</div>

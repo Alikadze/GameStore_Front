@@ -1,0 +1,38 @@
+.container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  form {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: space-around;
+    padding-left: 1rem;
+    padding-top: 1rem;
+    align-self: center;
+    max-width: 250px;
+    max-height: 500px;
+  
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  
+    .example-month-picker .mat-calendar-period-button {
+      pointer-events: none;
+    }
+    
+    .example-month-picker .mat-calendar-arrow {
+      display: none;
+    }
+  
+    mat-form-field {
+      width: 100%;
+    }
+  }
+
+}
+
