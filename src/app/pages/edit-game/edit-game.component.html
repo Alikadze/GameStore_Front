@@ -1,79 +1,80 @@
 <div class="container">
-  <form [formGroup]="form">
+  <form >
 
     <mat-form-field class="name">
       <mat-label>Name</mat-label>
       <input 
         matInput
-        type="text"  
-        formControlName="name"
+        type="text"
+        name="name"
+        [(ngModel)]="name"
         id="name"
       >
   
-      @if (form.get('name')?.hasError('required')) {
+      @if (!name) {
         <mat-error>Name is required</mat-error>
       }
   
-      @if (form.get('name')?.hasError('minlength')) {
+      @if (name.length < 3) {
         <mat-error>Name must be at least 3 characters long</mat-error>
       }
-  
-      @if (form.get('name')?.hasError('maxlength')) {
+   
+      @if (name.length > 50) {
         <mat-error>Name must be at most 50 characters long</mat-error>
       }
     </mat-form-field>
   
     <mat-form-field>
       <mat-label>Genre</mat-label>
-      <mat-select formControlName="genreId">
-        @for (genre of genres$ | async; track genre.id) {
+      <mat-select name="genre" [(ngModel)]="genreId">
+        @for (genre of genres(); track genre.id) {
           <mat-option [value]="genre.id">{{genre.name}}</mat-option>
         }
       </mat-select>
   
-      @if (form.get('genreId')?.hasError('required')) {
+      @if (!genreId) {
         <mat-error>Genre is required</mat-error>
       }
     </mat-form-field>
   
     <mat-form-field>
-      <mat-label>Price</mat-label>
+      <mat-label>Price ($)</mat-label>
       <input 
         matInput
         type="number"  
-        formControlName="price"
-        [defaultValue]="null"
+        name="price"
+        [(ngModel)]="price"
         id="price"
       >
   
-      @if (form.get('price')?.hasError('required')) {
+      @if (!price) {
         <mat-error>Price is required</mat-error>
       }
   
-      @if (form.get('price')?.hasError('min')) {
+      @if (price() < 0) {
         <mat-error>Price must be at least 0</mat-error>
       }
   
-      @if (form.get('price')?.hasError('max')) {
+      @if (price() > 100) {
         <mat-error>Price must be at most 100</mat-error>
       }
     </mat-form-field>
   
     <mat-form-field>
       <mat-label>Game release date</mat-label>
-      <input matInput [matDatepicker]="picker" [max]="newDate" formControlName="releaseDate">
+      <input matInput [matDatepicker]="picker" [max]="newDate()" name="date" [(ngModel)]="releaseDate">
       <mat-datepicker-toggle matIconSuffix [for]="picker"/>
       <mat-datepicker
         #picker
         touchUi
       />
   
-      @if (form.get('releaseDate')?.hasError('required')) {
+      @if (!releaseDate) {
         <mat-error>Release date is required</mat-error>
       }
     </mat-form-field>
   
   
-    <button style="margin: auto;" mat-flat-button (click)="createGame()">Add Game</button>
+    <button style="margin: auto;" mat-flat-button (click)="editGame()">Edit Game</button>
   </form>
 </div>
