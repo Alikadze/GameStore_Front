@@ -1,34 +1,25 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { GameFacade } from '../../core/facades/game.facade';
-import { AsyncPipe, JsonPipe } from '@angular/common';
 import { GenreFacade } from '../../core/facades/genre.facade';
-import {FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms'
-import { GamePayload } from '../../core/interfaces/game';
-import { catchError, tap, throwError } from 'rxjs';
-import {MatOptionModule} from '@angular/material/core';
-import {MatInputModule} from '@angular/material/input';
-import {MatFormFieldModule, MatHint} from '@angular/material/form-field';
-import {MatSelectModule} from '@angular/material/select';
-import {MatDatepicker, MatDatepickerModule} from '@angular/material/datepicker';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Game, GamePayload } from '../../core/interfaces/game';
+import { Router, RouterLink } from '@angular/router';
+import { MatTableModule } from '@angular/material/table';
+import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { RouterLink } from '@angular/router';
-
+import { MatDialog } from '@angular/material/dialog';
+import { DeleteConfirmDialogComponent } from '../../components/delete-confirm-dialog/delete-confirm-dialog.component';
+import { Genre } from '../../core/interfaces/genre';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [
-    JsonPipe,
-    AsyncPipe,
-    ReactiveFormsModule,
-    MatFormFieldModule, 
-    MatInputModule,
-    MatOptionModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatHint,
+    MatTableModule,
+    RouterLink,
+    MatIconModule,
     MatButtonModule,
-    RouterLink
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
@@ -36,50 +27,139 @@ import { RouterLink } from '@angular/router';
 export class HomeComponent {
   gameFacade = inject(GameFacade);
   genreFacade = inject(GenreFacade);
+  router = inject(Router);
+  dialog = inject(MatDialog);
 
-  newDate = new Date();
+  games = signal<Game[]>([]);
+  genres = signal<Genre[]>([]);
+  formValid = signal(true);
+  dialogOpen = signal(false);
+  error = signal<string | null>(null);
 
-  form = new FormGroup({
-    name: new FormControl('', [Validators.required, Validators.maxLength(50)]),
-    genreId: new FormControl(0, [Validators.required]),
-    price: new FormControl(0, [Validators.required, Validators.min(0), Validators.max(100)]),
-    releaseDate: new FormControl(new Date() ,Validators.required),
-  });
-  
-  games$ = this.gameFacade.getGames();
-  genres$ = this.genreFacade.getGenres();
+  private destroy$ = new Subject<void>();
+
+  displayedColumns = ['name', 'genre', 'price', 'releaseDate', 'actions'];
+
+  name = signal('');
+  genreId = signal(0);
+  price = signal(0);
+  releaseDate = signal(new Date());
+
+  constructor() {
+    this.loadGames();
+    this.loadGenres();
+  }
+
+  loadGames() {
+    this.gameFacade.getGames().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (data) => {
+        this.games.set(data);
+      },
+      error: (err) => {
+        this.error.set(err);
+      }
+    });
+  }
+
+  loadGenres() {
+    this.genreFacade.getGenres().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (data) => {
+        this.genres.set(data);
+      },
+      error: () => {
+        this.error.set('Failed to load genres');
+      }
+    });
+  }
+
+  openDialog() {
+    this.dialogOpen.set(true);
+    this.dialog.open(DeleteConfirmDialogComponent);
+  }
+
+  closeDialog() {
+    this.dialogOpen.set(false);
+  }
+
+  deleteGame(id: number) {
+    this.gameFacade.deleteGame(id).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: () => {
+        console.log('Game deleted');
+        this.loadGames();
+      },
+      error: (err) => {
+        this.error.set(err);
+      }
+    });
+    this.openDialog();
+  }
+
+  checkFormValidity() {
+    this.formValid.set(
+      this.name() !== '' &&
+      this.genreId() > 0 &&
+      this.price() > 0 &&
+      this.releaseDate() !== null
+    );
+  }
 
   createGame() {
-    if (!this.form.valid) {
+    this.checkFormValidity();
+
+    if (!this.formValid()) {
       console.log('Form is invalid');
       return;
     }
-  
-    const { name, genreId, price, releaseDate } = this.form.value as { name: string, genreId: number, price: number, releaseDate: Date };
-  
-    // Format releaseDate to 'YYYY-MM-DD'
-    const formattedDate = releaseDate ? 
-      `${releaseDate.getFullYear()}-${(releaseDate.getMonth() + 1).toString().padStart(2, '0')}-${releaseDate.getDate().toString().padStart(2, '0')}` 
+
+    const formattedDate = this.releaseDate()
+      ? `${this.releaseDate().getFullYear()}-${(this.releaseDate().getMonth() + 1).toString().padStart(2, '0')}-${this.releaseDate().getDate().toString().padStart(2, '0')}`
       : null;
-  
+
     const gamePayload: GamePayload = {
-      name,
-      genreId,
-      price,
-      releaseDate: formattedDate  // Send formatted date string
+      name: this.name(),
+      genreId: this.genreId(),
+      price: this.price(),
+      releaseDate: formattedDate
     };
 
-  
     this.gameFacade.createGame(gamePayload).pipe(
-      catchError((err) => {
-        return throwError(() => err);
-      }),
-      tap(() => {
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: () => {
         console.log('Game created');
-        this.games$ = this.gameFacade.getGames();      
-        this.form.reset();
-        this.form.untouched;
-      })
-    ).subscribe();
+        this.loadGames();
+        this.resetForm();
+      },
+      error: (err) => {
+        this.error.set(err);
+      }
+    });
+  }
+
+  resetForm() {
+    this.name.set('');
+    this.genreId.set(0);
+    this.price.set(0);
+    this.releaseDate.set(new Date());
+  }
+
+  editGame(id: number) {
+    this.router.navigate([`edit-game/${id}`]);
+  }
+
+  updateGame(id: number) {
+    this.router.navigate([`edit-game/${id}`]);
+  }
+
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

@@ -25,4 +25,8 @@ export class GameFacade {
   updateGame(id: number, game: any) {
     return this.gameService.updateGame(id, game);
   }
+
+  deleteGame(id: number) {
+    return this.gameService.deleteGame(id);
+  }
 }

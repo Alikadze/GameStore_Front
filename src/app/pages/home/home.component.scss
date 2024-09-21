@@ -1,0 +1,42 @@
+.main-container {
+  min-height: 100vh;
+  height: auto;
+  background: gainsboro;
+}
+
+.container {
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-top: 15px;
+  overflow: hidden;
+
+  table {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: none;
+  }
+}
+
+.button-container {
+  margin-bottom: 5px;
+}
+
+.swiper-slide {
+  @apply flex justify-center items-center;
+}
+
+.swiper-container {
+  @apply w-full max-w-5xl h-64 bg-gray-200;
+}
+
+.swiper-button-prev, .swiper-button-next {
+  @apply text-gray-700 hover:text-black transition duration-300 ease-in-out;
+}
+
+.swiper-pagination-bullet {
+  @apply bg-gray-500 opacity-75;
+}
+
+.swiper-pagination-bullet-active {
+  @apply bg-yellow-500;
+}

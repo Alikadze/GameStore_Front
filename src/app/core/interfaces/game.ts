@@ -1,7 +1,8 @@
 
 export interface GamePayload {
   name: string;
-  genreId: number;
+  genreId?: number;
+  genre?: string;
   price: number;
   releaseDate: null | string;
 }
@@ -9,6 +10,7 @@ export interface GamePayload {
 export interface Game {
   id: number;
   name: string;
+  genreId: number;
   genre: string;
   price: number;
   releaseDate: Date;
